@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemeinsame Kostenübersicht</title>
+
+<!-- Firebase Compat Bibliotheken für Browser -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- Chart.js für Kreisdiagramm -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { font-family: Arial, sans-serif; padding:15px; max-width:900px; margin:auto; }
+input, select, button { padding:10px; font-size:16px; margin:3px; }
+table { width:100%; border-collapse: collapse; margin-top:15px;}
+th, td { border:1px solid #ccc; padding:8px; }
+th { background:#f2f2f2; }
+.summe { font-weight:bold; }
+.form-row { display:flex; flex-wrap:wrap; gap:5px; }
+.hidden { display:none; }
+</style>
+</head>
+
+<body>
+
+<h2>Gemeinsame Kostenübersicht</h2>
+
+<!-- Login -->
+<div id="loginDiv">
+<input type="password" id="password" placeholder="Passwort">
+<button onclick="checkPassword()">Login</button>
+<p id="loginMsg" style="color:red;"></p>
+</div>
+
+<!-- Haupt-App -->
+<div id="appDiv" class="hidden">
+
+<div class="form-row">
+    <label>Monat:
+        <select id="monatSelect"></select>
+    </label>
+</div>
+
+<div class="form-row">
+    <input id="name" placeholder="Kostenpunkt">
+    <input id="betrag" type="number" step="0.01" placeholder="€">
+    <select id="kategorie">
+        <option>Miete</option>
+        <option>Versicherungen</option>
+        <option>Handy</option>
+        <option>Einkäufe</option>
+        <option>Luxusartikel</option>
+    </select>
+    <button onclick="hinzufuegen()">Hinzufügen</button>
+</div>
+
+<h3>Einträge</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Kategorie</th><th>Betrag</th><th></th></tr>
+</thead>
+<tbody id="liste"></tbody>
+</table>
+
+<h3>Kategorien</h3>
+<table>
+<thead><tr><th>Kategorie</th><th>Summe</th></tr></thead>
+<tbody id="kategorien"></tbody>
+<tfoot><tr class="summe"><td>Gesamt</td><td id="gesamt">0 €</td></tr></tfoot>
+</table>
+
+<h3>Diagramm</h3>
+<canvas id="chart" width="400" height="400"></canvas>
+
+<script>
+// 🔴 Passwortschutz
+const password = "familykosten"; // Hier dein gewünschtes Passwort
+
+function checkPassword(){
+    const pw = document.getElementById("password").value;
+    if(pw === password){
+        document.getElementById("loginDiv").classList.add("hidden");
+        document.getElementById("appDiv").classList.remove("hidden");
+        initMonths();
+    } else {
+        document.getElementById("loginMsg").innerText = "Falsches Passwort!";
+    }
+}
+
+// 🔴 Firebase Config (deine Angaben)
+const firebaseConfig = {
+  apiKey: "AIzaSyCwUkHyS3nRgT7EkEqgIOOtGinzxg0NhbA",
+  authDomain: "monatliche-kosten.firebaseapp.com",
+  projectId: "monatliche-kosten",
+  storageBucket: "monatliche-kosten.firebasestorage.app",
+  messagingSenderId: "402924174767",
+  appId: "1:402924174767:web:a4663c9d0b8e24b021435a"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// 🔹 Initialisierung
+let currentMonth = null;
+let chart;
+
+function initMonths(){
+    const sel = document.getElementById("monatSelect");
+    const start = new Date(2026,0,1);
+    const now = new Date();
+    let m = new Date(start);
+    while(m <= now){
+        const val = `${m.getFullYear()}-${("0"+(m.getMonth()+1)).slice(-2)}`;
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.innerText = val;
+        sel.appendChild(opt);
+        m.setMonth(m.getMonth()+1);
+    }
+    currentMonth = sel.value;
+    sel.onchange = ()=>{currentMonth=sel.value; render();};
+    render();
+}
+
+function getRef(){ 
+    return db.collection("kosten").doc(currentMonth).collection("eintraege"); 
+}
+
+const nameInput = document.getElementById("name");
+const betragInput = document.getElementById("betrag");
+const kategorieInput = document.getElementById("kategorie");
+
+// 🔹 Eintrag hinzufügen
+function hinzufuegen(){
+    const name = nameInput.value;
+    const betrag = parseFloat(betragInput.value);
+    const kategorie = kategorieInput.value;
+    if(!name||isNaN(betrag)) return;
+    getRef().add({name, betrag, kategorie});
+    nameInput.value=""; betragInput.value="";
+}
+
+// 🔹 Tabelle & Diagramm rendern
+function render(){
+    const liste = document.getElementById("liste");
+    const kategorienTbody = document.getElementById("kategorien");
+    liste.innerHTML=""; kategorienTbody.innerHTML="";
+    let sums={}; let gesamt=0;
+
+    getRef().onSnapshot(snapshot=>{
+        liste.innerHTML=""; kategorienTbody.innerHTML=""; sums={}; gesamt=0;
+        snapshot.forEach(doc=>{
+            const d = doc.data();
+            gesamt+=d.betrag;
+            sums[d.kategorie] = (sums[d.kategorie]||0)+d.betrag;
+
+            const row = liste.insertRow();
+            row.insertCell(0).innerText=d.name;
+            row.insertCell(1).innerText=d.kategorie;
+            row.insertCell(2).innerText=d.betrag.toFixed(2)+" €";
+            const del = row.insertCell(3);
+            const btn = document.createElement("button");
+            btn.innerText="❌"; 
+            btn.onclick=()=>getRef().doc(doc.id).delete();
+            del.appendChild(btn);
+        });
+
+        for(let k in sums){
+            const r = kategorienTbody.insertRow();
+            r.insertCell(0).innerText=k;
+            r.insertCell(1).innerText=sums[k].toFixed(2)+" €";
+        }
+
+        document.getElementById("gesamt").innerText=gesamt.toFixed(2)+" €";
+
+        // Kreisdiagramm
+        const ctx = document.getElementById('chart').getContext('2d');
+        if(chart) chart.destroy();
+        chart = new Chart(ctx,{
+            type:'pie',
+            data:{
+                labels:Object.keys(sums),
+                datasets:[{data:Object.values(sums), backgroundColor:['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF']}]
+            }
+        });
+    });
+}
+</script>
+</body>
+</html>
