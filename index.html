@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monatliche Kosten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <!-- Login -->
+  <section id="loginView" class="login-view">
+    <div class="login-card">
+      <p class="brand">Monatliche Kosten</p>
+      <h1>Gemeinsam den Überblick behalten</h1>
+      <p class="login-sub">Melde dich mit deinem Konto an.</p>
+      <form id="loginForm" class="login-form">
+        <label>
+          E-Mail
+          <input type="email" id="loginEmail" required autocomplete="username" placeholder="name@beispiel.de">
+        </label>
+        <label>
+          Passwort
+          <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••">
+        </label>
+        <button type="submit" class="btn btn-primary" id="loginBtn">Anmelden</button>
+        <p id="loginError" class="error-msg" role="alert" hidden></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- App -->
+  <div id="appView" class="app-view hidden">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <span class="brand">Monatliche Kosten</span>
+        <span id="roleBadge" class="badge"></span>
+      </div>
+      <div class="topbar-actions">
+        <label class="month-label">
+          Monat
+          <select id="monthSelect"></select>
+        </label>
+        <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <div id="globalError" class="banner error hidden" role="alert"></div>
+      <div id="loadingBanner" class="banner info hidden">Daten werden geladen…</div>
+
+      <!-- KPI -->
+      <section class="kpi-grid" aria-label="Kennzahlen">
+        <article class="kpi">
+          <p class="kpi-label">Gesamt</p>
+          <p class="kpi-value" id="kpiTotal">–</p>
+        </article>
+        <article class="kpi">
+          <p class="kpi-label" id="kpiPersonALabel">Person A</p>
+          <p class="kpi-value" id="kpiPersonA">–</p>
+        </article>
+        <article class="kpi">
+          <p class="kpi-label" id="kpiPersonBLabel">Person B</p>
+          <p class="kpi-value" id="kpiPersonB">–</p>
+        </article>
+        <article class="kpi kpi-accent">
+          <p class="kpi-label">Ausgleich</p>
+          <p class="kpi-value" id="kpiSettle">–</p>
+        </article>
+      </section>
+
+      <section class="settle-card" id="settleCard">
+        <h2>Ausgleich</h2>
+        <p id="settleText" class="settle-text">–</p>
+        <div class="goal-row admin-only person-names">
+          <label>
+            Name Person A
+            <input id="namePersonA" placeholder="z. B. Ben">
+          </label>
+          <label>
+            Name Person B
+            <input id="namePersonB" placeholder="z. B. Bruder">
+          </label>
+          <button type="button" class="btn btn-secondary" id="saveNamesBtn">Namen speichern</button>
+        </div>
+      </section>
+
+      <!-- Admin: add entry -->
+      <section class="panel admin-only" id="addPanel">
+        <div class="panel-head">
+          <h2>Eintrag hinzufügen</h2>
+        </div>
+        <form id="addForm" class="entry-form">
+          <input id="entryName" placeholder="Kostenpunkt" required>
+          <input id="entryAmount" type="number" step="0.01" min="0" placeholder="Betrag €" required>
+          <select id="entryCategory" required></select>
+          <select id="entryPerson" required></select>
+          <input id="entryNote" placeholder="Notiz (optional)">
+          <button type="submit" class="btn btn-primary">Hinzufügen</button>
+        </form>
+      </section>
+
+      <!-- Toolbar -->
+      <section class="toolbar">
+        <input type="search" id="searchInput" placeholder="Suchen…" aria-label="Suchen">
+        <select id="filterCategory" aria-label="Kategorie filtern">
+          <option value="">Alle Kategorien</option>
+        </select>
+        <select id="filterPerson" aria-label="Person filtern">
+          <option value="">Alle Personen</option>
+        </select>
+        <select id="sortSelect" aria-label="Sortierung">
+          <option value="name-asc">Name A–Z</option>
+          <option value="name-desc">Name Z–A</option>
+          <option value="betrag-desc">Betrag absteigend</option>
+          <option value="betrag-asc">Betrag aufsteigend</option>
+        </select>
+        <div class="toolbar-actions admin-only">
+          <button type="button" class="btn btn-secondary" id="copyPrevBtn" title="Einträge vom Vormonat kopieren">Vormonat übernehmen</button>
+          <button type="button" class="btn btn-secondary" id="exportBtn">CSV exportieren</button>
+        </div>
+        <button type="button" class="btn btn-secondary viewer-export" id="exportBtnViewer" hidden>CSV exportieren</button>
+      </section>
+
+      <div class="content-grid">
+        <!-- Entries -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Einträge</h2>
+            <span id="entryCount" class="muted"></span>
+          </div>
+          <div id="entriesEmpty" class="empty-state hidden">Noch keine Einträge in diesem Monat.</div>
+          <div class="table-wrap">
+            <table class="data-table" id="entriesTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Kategorie</th>
+                  <th>Person</th>
+                  <th>Betrag</th>
+                  <th class="admin-only"></th>
+                </tr>
+              </thead>
+              <tbody id="entriesBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Categories + budgets -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Kategorien & Budgets</h2>
+            <button type="button" class="btn btn-ghost admin-only" id="manageCatBtn">Verwalten</button>
+          </div>
+          <div id="categoriesEmpty" class="empty-state hidden">Keine Kategorien.</div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Kategorie</th>
+                  <th>Summe</th>
+                  <th>Budget</th>
+                  <th>Fortschritt</th>
+                </tr>
+              </thead>
+              <tbody id="categoriesBody"></tbody>
+              <tfoot>
+                <tr class="sum-row">
+                  <td>Gesamt</td>
+                  <td id="catTotal">0 €</td>
+                  <td id="budgetTotal">–</td>
+                  <td id="goalProgress">–</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="goal-row admin-only">
+            <label>
+              Sparziel / Gesamtbudget (€)
+              <input type="number" id="goalInput" step="0.01" min="0" placeholder="z. B. 2000">
+            </label>
+            <button type="button" class="btn btn-secondary" id="saveGoalBtn">Speichern</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Charts -->
+      <section class="charts-grid">
+        <article class="panel">
+          <h2>Verteilung</h2>
+          <div class="chart-wrap">
+            <canvas id="pieChart"></canvas>
+          </div>
+          <p id="pieEmpty" class="empty-state hidden">Keine Daten für das Diagramm.</p>
+        </article>
+        <article class="panel">
+          <h2>Monatsvergleich</h2>
+          <div class="chart-wrap">
+            <canvas id="barChart"></canvas>
+          </div>
+          <p id="barEmpty" class="empty-state hidden">Kein Vormonat zum Vergleich.</p>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <!-- Edit modal -->
+  <dialog id="editDialog" class="modal">
+    <form method="dialog" id="editForm" class="modal-body">
+      <h2>Eintrag bearbeiten</h2>
+      <input type="hidden" id="editId">
+      <label>Name <input id="editName" required></label>
+      <label>Betrag (€) <input id="editAmount" type="number" step="0.01" min="0" required></label>
+      <label>Kategorie <select id="editCategory" required></select></label>
+      <label>Person <select id="editPerson" required></select></label>
+      <label>Notiz <input id="editNote"></label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="editCancel">Abbrechen</button>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Categories modal -->
+  <dialog id="catDialog" class="modal">
+    <div class="modal-body">
+      <h2>Kategorien verwalten</h2>
+      <form id="catAddForm" class="inline-form">
+        <input id="newCatName" placeholder="Neue Kategorie" required>
+        <button type="submit" class="btn btn-primary">Anlegen</button>
+      </form>
+      <ul id="catManageList" class="cat-list"></ul>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="catClose">Schließen</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Budget edit is inline in category table for admin -->
+
+  <script src="js/config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/firestore.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

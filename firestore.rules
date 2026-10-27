@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return signedIn() && userDoc().role == 'admin';
+    }
+
+    function isViewerOrAdmin() {
+      return signedIn() && userDoc().role in ['admin', 'viewer'];
+    }
+
+    // Profiles: signed-in users may read (needed for bootstrap / role checks).
+    // Create own doc once; role changes only by admin in Console or as admin.
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == userId
+        && request.resource.data.role in ['admin', 'viewer'];
+      allow update, delete: if isAdmin();
+    }
+
+    match /settings/{docId} {
+      allow read: if isViewerOrAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /kategorien/{catId} {
+      allow read: if isViewerOrAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /budgets/{monthId} {
+      allow read: if isViewerOrAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /kosten/{monthId} {
+      allow read: if isViewerOrAdmin();
+      allow write: if isAdmin();
+
+      match /eintraege/{entryId} {
+        allow read: if isViewerOrAdmin();
+        allow create, update, delete: if isAdmin();
+      }
+    }
+  }
+}
