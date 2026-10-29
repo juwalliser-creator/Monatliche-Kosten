@@ -71,10 +71,6 @@
           <p class="kpi-label" id="kpiPersonBLabel">Person B</p>
           <p class="kpi-value" id="kpiPersonB">–</p>
         </article>
-        <article class="kpi kpi-accent">
-          <p class="kpi-label">Ausgleich</p>
-          <p class="kpi-value" id="kpiSettle">–</p>
-        </article>
       </section>
 
       <!-- Charts -->
@@ -95,13 +91,13 @@
         </article>
       </section>
 
-      <section class="settle-card" id="settleCard">
-        <h2>Ausgleich</h2>
-        <p id="settleText" class="settle-text">–</p>
-        <div class="goal-row admin-only person-names">
+      <section class="settle-card admin-only" id="settleCard">
+        <h2>Personen</h2>
+        <p class="muted">Namen für die Ausgaben-Zuordnung (wer hat ausgegeben) — kein gegenseitiger Ausgleich.</p>
+        <div class="goal-row person-names">
           <label>
             Name Person A
-            <input id="namePersonA" placeholder="z. B. Ben">
+            <input id="namePersonA" placeholder="z. B. Julian">
           </label>
           <label>
             Name Person B
@@ -117,10 +113,10 @@
           <h2>Eintrag hinzufügen</h2>
         </div>
         <form id="addForm" class="entry-form">
-          <input id="entryName" placeholder="Kostenpunkt" required>
+          <input id="entryName" placeholder="Bezeichnung" required>
           <input id="entryAmount" type="number" step="0.01" min="0" placeholder="Betrag €" required>
-          <select id="entryCategory" required></select>
-          <select id="entryPerson" required></select>
+          <select id="entryCategory" required aria-label="Kategorie"></select>
+          <select id="entryPerson" required aria-label="Wer hat ausgegeben"></select>
           <input id="entryNote" placeholder="Notiz (optional)">
           <button type="submit" class="btn btn-primary">Hinzufügen</button>
         </form>
@@ -160,9 +156,9 @@
             <table class="data-table" id="entriesTable">
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th>Bezeichnung</th>
                   <th>Kategorie</th>
-                  <th>Person</th>
+                  <th>Ausgegeben von</th>
                   <th>Betrag</th>
                   <th class="admin-only"></th>
                 </tr>

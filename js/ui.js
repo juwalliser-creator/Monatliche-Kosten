@@ -136,20 +136,6 @@ function computeSums(entries) {
   return { byCat, total, a, b };
 }
 
-function settlementText(sumA, sumB) {
-  const nameA = personLabel(PERSON_A);
-  const nameB = personLabel(PERSON_B);
-  const diff = sumA - sumB;
-  const owe = Math.abs(diff) / 2;
-  if (owe < 0.005) {
-    return `${nameA} und ${nameB} sind ausgeglichen.`;
-  }
-  if (diff > 0) {
-    return `${nameB} schuldet ${nameA} ${formatEuro(owe)}.`;
-  }
-  return `${nameA} schuldet ${nameB} ${formatEuro(owe)}.`;
-}
-
 function renderEntries() {
   const body = $("entriesBody");
   const list = filteredEntries();
@@ -289,10 +275,6 @@ function renderKpisAndCharts() {
   $("kpiTotal").textContent = formatEuro(total);
   $("kpiPersonA").textContent = formatEuro(a);
   $("kpiPersonB").textContent = formatEuro(b);
-
-  const owe = Math.abs(a - b) / 2;
-  $("kpiSettle").textContent = owe < 0.005 ? "0,00 €" : formatEuro(owe);
-  $("settleText").textContent = settlementText(a, b);
 
   renderPieChart(byCat);
 

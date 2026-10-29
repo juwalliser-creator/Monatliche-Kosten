@@ -64,7 +64,7 @@ Das Sparziel lässt sich auch in der App setzen (nur Admin).
 
 - Login mit Session über Reload
 - Einträge anlegen, bearbeiten, löschen (Admin)
-- Personenzuordnung und Ausgleich („X schuldet Y … €“)
+- Personenzuordnung (wer hat wie viel ausgegeben — ohne gegenseitigen Ausgleich)
 - Eigene Kategorien, Budgets pro Kategorie, Gesamt-Sparziel
 - Filter, Suche, Sortierung
 - Vormonat übernehmen, Monatsvergleich, CSV-Export
