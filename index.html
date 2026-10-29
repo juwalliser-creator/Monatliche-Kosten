@@ -57,12 +57,32 @@
       <div id="globalError" class="banner error hidden" role="alert"></div>
       <div id="loadingBanner" class="banner info hidden">Daten werden geladen…</div>
 
-      <!-- KPI -->
-      <section class="kpi-grid" aria-label="Kennzahlen">
+      <!-- KPI inkl. editierbares Monatsbudget -->
+      <section class="kpi-grid kpi-budget" aria-label="Budget">
+        <article class="kpi kpi-editable admin-only" id="budgetKpiAdmin">
+          <p class="kpi-label">Monatsbudget</p>
+          <div class="kpi-input-row">
+            <input type="number" id="monatsBudgetInput" class="kpi-input" step="0.01" min="0" placeholder="5000" aria-label="Monatsbudget in Euro">
+            <span class="kpi-suffix">€</span>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="saveMonatsBudgetBtn">Speichern</button>
+        </article>
+        <article class="kpi viewer-budget" id="budgetKpiViewer" hidden>
+          <p class="kpi-label">Monatsbudget</p>
+          <p class="kpi-value" id="kpiAvailable">–</p>
+        </article>
         <article class="kpi">
-          <p class="kpi-label">Gesamt</p>
+          <p class="kpi-label">Ausgegeben</p>
           <p class="kpi-value" id="kpiTotal">–</p>
         </article>
+        <article class="kpi kpi-accent">
+          <p class="kpi-label">Übrig</p>
+          <p class="kpi-value" id="kpiRemaining">–</p>
+        </article>
+      </section>
+      <p id="monatsBudgetHint" class="muted budget-hint"></p>
+
+      <section class="kpi-grid" aria-label="Ausgaben nach Person">
         <article class="kpi">
           <p class="kpi-label" id="kpiPersonALabel">Person A</p>
           <p class="kpi-value" id="kpiPersonA">–</p>
@@ -71,10 +91,21 @@
           <p class="kpi-label" id="kpiPersonBLabel">Person B</p>
           <p class="kpi-value" id="kpiPersonB">–</p>
         </article>
+        <article class="kpi">
+          <p class="kpi-label">Anteil vom Budget</p>
+          <p class="kpi-value" id="kpiBudgetPct">–</p>
+        </article>
       </section>
 
       <!-- Charts -->
-      <section class="charts-grid">
+      <section class="charts-grid charts-grid-3">
+        <article class="panel">
+          <h2>Budget</h2>
+          <div class="chart-wrap">
+            <canvas id="budgetChart"></canvas>
+          </div>
+          <p id="budgetEmpty" class="empty-state hidden">Bitte zuerst ein Monatsbudget setzen.</p>
+        </article>
         <article class="panel">
           <h2>Verteilung</h2>
           <div class="chart-wrap">
@@ -191,17 +222,10 @@
                   <td>Gesamt</td>
                   <td id="catTotal">0 €</td>
                   <td id="budgetTotal">–</td>
-                  <td id="goalProgress">–</td>
+                  <td id="catBudgetPct">–</td>
                 </tr>
               </tfoot>
             </table>
-          </div>
-          <div class="goal-row admin-only">
-            <label>
-              Sparziel / Gesamtbudget (€)
-              <input type="number" id="goalInput" step="0.01" min="0" placeholder="z. B. 2000">
-            </label>
-            <button type="button" class="btn btn-secondary" id="saveGoalBtn">Speichern</button>
           </div>
         </section>
       </div>

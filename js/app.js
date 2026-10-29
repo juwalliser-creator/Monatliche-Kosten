@@ -121,18 +121,22 @@ function bindAppUI() {
   $("exportBtn").addEventListener("click", doExport);
   $("exportBtnViewer").addEventListener("click", doExport);
 
-  $("saveGoalBtn").addEventListener("click", async () => {
+  async function saveMonatsBudgetFromInput() {
     if (!isAdmin()) return;
-    const raw = $("goalInput").value;
-    const sparziel = raw === "" ? null : Number(raw);
     try {
-      await saveSettings({ sparziel });
-      renderCategories();
-      renderKpisAndCharts();
+      await setMonatsBudget($("monatsBudgetInput").value);
     } catch (err) {
       setGlobalError(err.message);
     }
+  }
+  $("saveMonatsBudgetBtn").addEventListener("click", saveMonatsBudgetFromInput);
+  $("monatsBudgetInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveMonatsBudgetFromInput();
+    }
   });
+  $("monatsBudgetInput").addEventListener("change", saveMonatsBudgetFromInput);
 
   $("saveNamesBtn").addEventListener("click", async () => {
     if (!isAdmin()) return;

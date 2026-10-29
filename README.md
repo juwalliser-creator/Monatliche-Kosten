@@ -52,13 +52,12 @@ Dokument `settings/app`:
 
 ```json
 {
-  "personAName": "Ben",
-  "personBName": "Bruder",
-  "sparziel": 2000
+  "personAName": "Julian",
+  "personBName": "Bruder"
 }
 ```
 
-Das Sparziel lässt sich auch in der App setzen (nur Admin).
+Das **Monatsbudget** (verfügbares Geld) setzt du in der App pro Monat (nur Admin). Es liegt in `budgets/{YYYY-MM}` unter `monatsBudget`.
 
 ## Funktionen
 
@@ -76,8 +75,8 @@ Das Sparziel lässt sich auch in der App setzen (nur Admin).
 |------|--------|
 | `kosten/{YYYY-MM}/eintraege/{id}` | name, betrag, kategorie, person, notiz |
 | `kategorien/{id}` | name, order |
-| `budgets/{YYYY-MM}` | `{ limits: { Kategorie: number } }` |
-| `settings/app` | personAName, personBName, sparziel |
+| `budgets/{YYYY-MM}` | `{ monatsBudget: number, limits: { Kategorie: number } }` |
+| `settings/app` | personAName, personBName |
 | `users/{uid}` | role, name, email |
 
 Bestehende Einträge ohne `person` werden als Person A behandelt.

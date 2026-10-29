@@ -1,5 +1,6 @@
 let pieChart = null;
 let barChart = null;
+let budgetChart = null;
 
 const CHART_COLORS = ["#0d6e63", "#3d7ea6", "#c9842a", "#8b5e83", "#4f6f52", "#b85c38", "#5c6b7a"];
 
@@ -12,6 +13,59 @@ function destroyCharts() {
     barChart.destroy();
     barChart = null;
   }
+  if (budgetChart) {
+    budgetChart.destroy();
+    budgetChart = null;
+  }
+}
+
+function renderBudgetChart(spent, available) {
+  const canvas = document.getElementById("budgetChart");
+  const empty = document.getElementById("budgetEmpty");
+
+  if (available == null || available <= 0) {
+    if (budgetChart) {
+      budgetChart.destroy();
+      budgetChart = null;
+    }
+    canvas.classList.add("hidden");
+    empty.classList.remove("hidden");
+    empty.textContent = "Bitte zuerst ein Monatsbudget setzen.";
+    return;
+  }
+
+  canvas.classList.remove("hidden");
+  empty.classList.add("hidden");
+
+  const used = Math.min(spent, available);
+  const remaining = Math.max(0, available - spent);
+  const over = Math.max(0, spent - available);
+
+  const labels = over > 0 ? ["Ausgegeben", "Überzogen"] : ["Ausgegeben", "Übrig"];
+  const data = over > 0 ? [available, over] : [used, remaining];
+  const colors = over > 0 ? ["#b45309", "#b42318"] : ["#0d6e63", "#c5ddd8"];
+
+  if (budgetChart) budgetChart.destroy();
+  budgetChart = new Chart(canvas.getContext("2d"), {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: "62%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { boxWidth: 12, font: { family: "Manrope" } }
+        }
+      }
+    }
+  });
 }
 
 function renderPieChart(sums) {

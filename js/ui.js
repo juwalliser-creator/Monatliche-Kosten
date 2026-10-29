@@ -27,6 +27,8 @@ function applyRoleUI() {
   badge.textContent = admin ? "Bearbeiten" : "Nur Lesen";
   badge.classList.toggle("viewer", !admin);
   $("exportBtnViewer").hidden = admin;
+  if ($("budgetKpiViewer")) $("budgetKpiViewer").hidden = admin;
+  if ($("budgetKpiAdmin")) $("budgetKpiAdmin").classList.toggle("hidden", !admin);
 }
 
 function fillMonthSelect() {
@@ -256,15 +258,14 @@ function renderCategories() {
   $("catTotal").textContent = formatEuro(total);
   $("budgetTotal").textContent = budgetSum > 0 ? formatEuro(budgetSum) : "–";
 
-  const goal = state.settings.sparziel;
-  if (goal != null && goal > 0) {
-    const gPct = Math.min(100, (total / goal) * 100);
-    $("goalProgress").textContent = `${gPct.toFixed(0)} % von ${formatEuro(goal)}`;
+  const monats = state.monatsBudget;
+  if (monats != null && monats > 0) {
+    const gPct = (total / monats) * 100;
+    $("catBudgetPct").textContent = `${gPct.toFixed(0)} % vom Monatsbudget`;
   } else {
-    $("goalProgress").textContent = "–";
+    $("catBudgetPct").textContent = "–";
   }
   if (admin) {
-    $("goalInput").value = goal != null ? goal : "";
     $("namePersonA").value = state.settings.personAName || "";
     $("namePersonB").value = state.settings.personBName || "";
   }
@@ -272,10 +273,46 @@ function renderCategories() {
 
 function renderKpisAndCharts() {
   const { byCat, total, a, b } = computeSums(state.entries);
+  const available = state.monatsBudget;
+  const remaining = available != null ? available - total : null;
+
+  if ($("kpiAvailable")) {
+    $("kpiAvailable").textContent = available != null ? formatEuro(available) : "–";
+  }
   $("kpiTotal").textContent = formatEuro(total);
+  if (remaining == null) {
+    $("kpiRemaining").textContent = "–";
+    $("kpiRemaining").parentElement.classList.remove("kpi-warn");
+  } else {
+    $("kpiRemaining").textContent = formatEuro(remaining);
+    $("kpiRemaining").parentElement.classList.toggle("kpi-warn", remaining < 0);
+  }
+
   $("kpiPersonA").textContent = formatEuro(a);
   $("kpiPersonB").textContent = formatEuro(b);
+  if (available != null && available > 0) {
+    $("kpiBudgetPct").textContent = `${((total / available) * 100).toFixed(0)} %`;
+  } else {
+    $("kpiBudgetPct").textContent = "–";
+  }
 
+  const input = $("monatsBudgetInput");
+  if (input && document.activeElement !== input) {
+    input.value = available != null ? available : "";
+  }
+
+  const hint = $("monatsBudgetHint");
+  if (available == null) {
+    hint.textContent = isAdmin()
+      ? "Oben links das Monatsbudget eintragen (z. B. 5000) und Speichern."
+      : "Für diesen Monat ist noch kein Budget hinterlegt.";
+  } else if (remaining < 0) {
+    hint.textContent = `Budget um ${formatEuro(Math.abs(remaining))} überschritten.`;
+  } else {
+    hint.textContent = `${formatEuro(total)} ausgegeben · ${formatEuro(remaining)} übrig von ${formatEuro(available)}.`;
+  }
+
+  renderBudgetChart(total, available);
   renderPieChart(byCat);
 
   const prevTotal = state.prevEntries.reduce((s, e) => s + e.betrag, 0);

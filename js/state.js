@@ -7,10 +7,10 @@ const state = {
   prevEntries: [],
   categories: [],
   budgets: {},
+  monatsBudget: null,
   settings: {
     personAName: "Ich",
-    personBName: "Bruder",
-    sparziel: null
+    personBName: "Bruder"
   },
   filters: {
     search: "",

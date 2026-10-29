@@ -279,6 +279,46 @@ button:focus-visible {
   color: var(--danger);
 }
 
+.budget-hint {
+  margin: -4px 0 4px;
+}
+
+.kpi-editable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kpi-input-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.kpi-input {
+  width: 100%;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.kpi-suffix {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  align-self: flex-start;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -306,6 +346,10 @@ button:focus-visible {
 
 .kpi-accent .kpi-label {
   color: rgba(255, 255, 255, 0.75);
+}
+
+.kpi-accent.kpi-warn {
+  background: linear-gradient(145deg, #b45309, #9a3412);
 }
 
 .kpi-label {
@@ -384,6 +428,10 @@ button:focus-visible {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   gap: 16px;
+}
+
+.charts-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .table-wrap {
@@ -539,7 +587,8 @@ button:focus-visible {
 @media (max-width: 900px) {
   .kpi-grid,
   .content-grid,
-  .charts-grid {
+  .charts-grid,
+  .charts-grid-3 {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -547,7 +596,8 @@ button:focus-visible {
 @media (max-width: 640px) {
   .kpi-grid,
   .content-grid,
-  .charts-grid {
+  .charts-grid,
+  .charts-grid-3 {
     grid-template-columns: 1fr;
   }
 

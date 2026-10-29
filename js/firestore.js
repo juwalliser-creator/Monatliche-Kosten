@@ -30,8 +30,7 @@ async function loadSettings() {
     const d = snap.data();
     state.settings = {
       personAName: d.personAName || "Ich",
-      personBName: d.personBName || "Bruder",
-      sparziel: d.sparziel != null ? Number(d.sparziel) : null
+      personBName: d.personBName || "Bruder"
     };
   }
 }
@@ -112,9 +111,25 @@ async function deleteCategory(id) {
 function listenBudgets(month, onChange) {
   return budgetsRef(month).onSnapshot(
     (snap) => {
-      state.budgets = snap.exists ? (snap.data().limits || snap.data() || {}) : {};
-      // strip non-limit meta if present
-      if (state.budgets.limits) state.budgets = state.budgets.limits;
+      if (!snap.exists) {
+        state.budgets = {};
+        state.monatsBudget = null;
+      } else {
+        const data = snap.data() || {};
+        state.budgets = data.limits && typeof data.limits === "object" ? { ...data.limits } : {};
+        // Legacy: flat category keys without limits wrapper
+        if (!data.limits) {
+          Object.keys(data).forEach((k) => {
+            if (k !== "monatsBudget" && typeof data[k] === "number") {
+              state.budgets[k] = data[k];
+            }
+          });
+        }
+        state.monatsBudget =
+          data.monatsBudget != null && !Number.isNaN(Number(data.monatsBudget))
+            ? Number(data.monatsBudget)
+            : null;
+      }
       onChange();
     },
     (err) => {
@@ -132,6 +147,14 @@ async function setCategoryBudget(category, amount) {
     limits[category] = Number(amount);
   }
   await budgetsRef(state.currentMonth).set({ limits }, { merge: true });
+}
+
+async function setMonatsBudget(amount) {
+  if (amount === "" || amount == null || Number.isNaN(Number(amount))) {
+    await budgetsRef(state.currentMonth).set({ monatsBudget: null }, { merge: true });
+    return;
+  }
+  await budgetsRef(state.currentMonth).set({ monatsBudget: Number(amount) }, { merge: true });
 }
 
 function normalizeEntry(doc) {
