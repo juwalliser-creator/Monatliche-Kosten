@@ -93,8 +93,12 @@ function fillPersonSelects() {
   $("kpiPersonBLabel").textContent = personLabel(PERSON_B);
 }
 
+function artLabel(art) {
+  return art === ART_GEPLANT ? "Planmäßig" : "Ausgabe";
+}
+
 function filteredEntries() {
-  const { search, category, person, sort } = state.filters;
+  const { search, category, person, art, sort } = state.filters;
   let list = [...state.entries];
   const q = search.trim().toLowerCase();
   if (q) {
@@ -102,11 +106,13 @@ function filteredEntries() {
       e.name.toLowerCase().includes(q) ||
       e.kategorie.toLowerCase().includes(q) ||
       (e.notiz || "").toLowerCase().includes(q) ||
-      personLabel(e.person).toLowerCase().includes(q)
+      personLabel(e.person).toLowerCase().includes(q) ||
+      artLabel(e.art).toLowerCase().includes(q)
     );
   }
   if (category) list = list.filter((e) => e.kategorie === category);
   if (person) list = list.filter((e) => e.person === person);
+  if (art) list = list.filter((e) => e.art === art);
 
   list.sort((a, b) => {
     switch (sort) {
@@ -129,13 +135,22 @@ function computeSums(entries) {
   let total = 0;
   let a = 0;
   let b = 0;
+  let ist = 0;
+  let geplant = 0;
+  let sparenGeplant = 0;
   entries.forEach((e) => {
     total += e.betrag;
     byCat[e.kategorie] = (byCat[e.kategorie] || 0) + e.betrag;
     if (e.person === PERSON_B) b += e.betrag;
     else a += e.betrag;
+    if (e.art === ART_GEPLANT) {
+      geplant += e.betrag;
+      if (e.kategorie === "Sparen") sparenGeplant += e.betrag;
+    } else {
+      ist += e.betrag;
+    }
   });
-  return { byCat, total, a, b };
+  return { byCat, total, a, b, ist, geplant, sparenGeplant };
 }
 
 function renderEntries() {
@@ -149,8 +164,11 @@ function renderEntries() {
   const admin = isAdmin();
   list.forEach((e) => {
     const tr = document.createElement("tr");
+    if (e.art === ART_GEPLANT) tr.classList.add("row-planned");
+    const badgeClass = e.art === ART_GEPLANT ? "tag tag-planned" : "tag tag-ist";
     tr.innerHTML = `
       <td>${escapeHtml(e.name)}${e.notiz ? `<div class="muted">${escapeHtml(e.notiz)}</div>` : ""}</td>
+      <td><span class="${badgeClass}">${escapeHtml(artLabel(e.art))}</span></td>
       <td>${escapeHtml(e.kategorie)}</td>
       <td>${escapeHtml(personLabel(e.person))}</td>
       <td>${formatEuro(e.betrag)}</td>
@@ -272,7 +290,7 @@ function renderCategories() {
 }
 
 function renderKpisAndCharts() {
-  const { byCat, total, a, b } = computeSums(state.entries);
+  const { byCat, total, a, b, ist, geplant, sparenGeplant } = computeSums(state.entries);
   const available = state.monatsBudget;
   const remaining = available != null ? available - total : null;
 
@@ -295,6 +313,9 @@ function renderKpisAndCharts() {
   } else {
     $("kpiBudgetPct").textContent = "–";
   }
+  $("kpiIst").textContent = formatEuro(ist);
+  $("kpiGeplant").textContent = formatEuro(geplant);
+  $("kpiSparen").textContent = formatEuro(sparenGeplant);
 
   const input = $("monatsBudgetInput");
   if (input && document.activeElement !== input) {
@@ -338,6 +359,7 @@ function openEditDialog(entry) {
   $("editAmount").value = entry.betrag;
   $("editCategory").value = entry.kategorie;
   $("editPerson").value = entry.person;
+  $("editArt").value = entry.art === ART_GEPLANT ? ART_GEPLANT : ART_IST;
   $("editNote").value = entry.notiz || "";
   $("editDialog").showModal();
 }

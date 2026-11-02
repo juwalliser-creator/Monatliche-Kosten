@@ -64,6 +64,7 @@ Das **Monatsbudget** (verfügbares Geld) setzt du in der App pro Monat (nur Admi
 - Login mit Session über Reload
 - Einträge anlegen, bearbeiten, löschen (Admin)
 - Personenzuordnung (wer hat wie viel ausgegeben — ohne gegenseitigen Ausgleich)
+- Planmäßige Einträge (z. B. monatlich 700 € Einkäufe, Sparen) mit Kennzeichnung und Filter
 - Eigene Kategorien, Budgets pro Kategorie, Gesamt-Sparziel
 - Filter, Suche, Sortierung
 - Vormonat übernehmen, Monatsvergleich, CSV-Export
@@ -73,7 +74,7 @@ Das **Monatsbudget** (verfügbares Geld) setzt du in der App pro Monat (nur Admi
 
 | Pfad | Inhalt |
 |------|--------|
-| `kosten/{YYYY-MM}/eintraege/{id}` | name, betrag, kategorie, person, notiz |
+| `kosten/{YYYY-MM}/eintraege/{id}` | name, betrag, kategorie, person, art (`ist`\|`geplant`), notiz |
 | `kategorien/{id}` | name, order |
 | `budgets/{YYYY-MM}` | `{ monatsBudget: number, limits: { Kategorie: number } }` |
 | `settings/app` | personAName, personBName |

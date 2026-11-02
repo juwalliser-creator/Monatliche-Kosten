@@ -319,6 +319,44 @@ button:focus-visible {
   align-self: flex-start;
 }
 
+.form-hint {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+}
+
+.kpi-planned {
+  background: linear-gradient(145deg, #eef6f8, #e3eef3);
+  border-color: rgba(61, 126, 166, 0.25);
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.tag-planned {
+  background: #d9ebf5;
+  color: #1f4f6d;
+}
+
+.tag-ist {
+  background: #e6eee9;
+  color: #2f5a45;
+}
+
+.row-planned {
+  background: rgba(61, 126, 166, 0.06);
+}
+
+.row-planned td:first-child {
+  box-shadow: inset 3px 0 0 #3d7ea6;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

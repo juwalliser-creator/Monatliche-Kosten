@@ -64,6 +64,10 @@ function bindAppUI() {
     state.filters.person = $("filterPerson").value;
     renderEntries();
   });
+  $("filterArt").addEventListener("change", () => {
+    state.filters.art = $("filterArt").value;
+    renderEntries();
+  });
   $("sortSelect").addEventListener("change", () => {
     state.filters.sort = $("sortSelect").value;
     renderEntries();
@@ -78,9 +82,11 @@ function bindAppUI() {
         betrag: $("entryAmount").value,
         kategorie: $("entryCategory").value,
         person: $("entryPerson").value,
+        art: $("entryArt").value,
         notiz: $("entryNote").value
       });
       $("addForm").reset();
+      $("entryArt").value = ART_IST;
       fillCategorySelects();
       fillPersonSelects();
     } catch (err) {
@@ -97,6 +103,7 @@ function bindAppUI() {
         betrag: $("editAmount").value,
         kategorie: $("editCategory").value,
         person: $("editPerson").value,
+        art: $("editArt").value,
         notiz: $("editNote").value
       });
       $("editDialog").close();

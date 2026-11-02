@@ -17,8 +17,12 @@ const DEFAULT_CATEGORIES = [
   "Versicherungen",
   "Handy",
   "Einkäufe",
-  "Luxusartikel"
+  "Luxusartikel",
+  "Sparen"
 ];
+
+const ART_IST = "ist";
+const ART_GEPLANT = "geplant";
 
 const PERSON_A = "personA";
 const PERSON_B = "personB";

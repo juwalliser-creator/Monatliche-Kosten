@@ -16,6 +16,7 @@ const state = {
     search: "",
     category: "",
     person: "",
+    art: "",
     sort: "name-asc"
   },
   loading: false,

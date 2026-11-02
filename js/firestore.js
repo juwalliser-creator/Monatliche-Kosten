@@ -50,7 +50,22 @@ async function ensureCategories() {
       batch.set(ref, { name, order: i, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
     });
     await batch.commit();
+    return;
   }
+  const existing = new Set();
+  snap.forEach((doc) => existing.add(String(doc.data().name || "")));
+  const missing = DEFAULT_CATEGORIES.filter((n) => !existing.has(n));
+  if (!missing.length) return;
+  const maxOrder = snap.docs.reduce((m, d) => Math.max(m, d.data().order ?? 0), -1);
+  const batch = db.batch();
+  missing.forEach((name, i) => {
+    batch.set(col.doc(), {
+      name,
+      order: maxOrder + 1 + i,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  });
+  await batch.commit();
 }
 
 function listenCategories(onChange) {
@@ -165,6 +180,7 @@ function normalizeEntry(doc) {
     betrag: Number(d.betrag) || 0,
     kategorie: d.kategorie || "Sonstiges",
     person: d.person === PERSON_B ? PERSON_B : (d.person === PERSON_A ? PERSON_A : PERSON_A),
+    art: d.art === ART_GEPLANT ? ART_GEPLANT : ART_IST,
     notiz: d.notiz || "",
     createdAt: d.createdAt || null
   };
@@ -194,12 +210,13 @@ async function loadPrevMonthEntries(month) {
   return list;
 }
 
-async function addEntry({ name, betrag, kategorie, person, notiz }) {
+async function addEntry({ name, betrag, kategorie, person, art, notiz }) {
   await entriesRef(state.currentMonth).add({
     name: name.trim(),
     betrag: Number(betrag),
     kategorie,
     person,
+    art: art === ART_GEPLANT ? ART_GEPLANT : ART_IST,
     notiz: (notiz || "").trim(),
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
@@ -211,6 +228,7 @@ async function updateEntry(id, data) {
     betrag: Number(data.betrag),
     kategorie: data.kategorie,
     person: data.person,
+    art: data.art === ART_GEPLANT ? ART_GEPLANT : ART_IST,
     notiz: (data.notiz || "").trim()
   });
 }
@@ -232,6 +250,7 @@ async function copyPreviousMonth() {
       betrag: Number(d.betrag) || 0,
       kategorie: d.kategorie || "Sonstiges",
       person: d.person === PERSON_B ? PERSON_B : PERSON_A,
+      art: d.art === ART_GEPLANT ? ART_GEPLANT : ART_IST,
       notiz: d.notiz || "",
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       copiedFrom: prev

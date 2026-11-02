@@ -1,7 +1,8 @@
 function exportCsv(entries, month) {
-  const header = ["Name", "Kategorie", "Person", "Betrag", "Notiz"];
+  const header = ["Name", "Art", "Kategorie", "Person", "Betrag", "Notiz"];
   const rows = entries.map((e) => [
     e.name,
+    e.art === ART_GEPLANT ? "Planmäßig" : "Ausgabe",
     e.kategorie,
     personLabel(e.person),
     String(e.betrag).replace(".", ","),

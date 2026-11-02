@@ -97,6 +97,21 @@
         </article>
       </section>
 
+      <section class="kpi-grid kpi-art" aria-label="Ist und geplant">
+        <article class="kpi">
+          <p class="kpi-label">Ausgaben (Ist)</p>
+          <p class="kpi-value" id="kpiIst">–</p>
+        </article>
+        <article class="kpi kpi-planned">
+          <p class="kpi-label">Planmäßig</p>
+          <p class="kpi-value" id="kpiGeplant">–</p>
+        </article>
+        <article class="kpi">
+          <p class="kpi-label">Davon Sparen (geplant)</p>
+          <p class="kpi-value" id="kpiSparen">–</p>
+        </article>
+      </section>
+
       <!-- Charts -->
       <section class="charts-grid charts-grid-3">
         <article class="panel">
@@ -148,9 +163,14 @@
           <input id="entryAmount" type="number" step="0.01" min="0" placeholder="Betrag €" required>
           <select id="entryCategory" required aria-label="Kategorie"></select>
           <select id="entryPerson" required aria-label="Wer hat ausgegeben"></select>
+          <select id="entryArt" required aria-label="Art">
+            <option value="ist">Ausgabe (Ist)</option>
+            <option value="geplant">Planmäßig</option>
+          </select>
           <input id="entryNote" placeholder="Notiz (optional)">
           <button type="submit" class="btn btn-primary">Hinzufügen</button>
         </form>
+        <p class="muted form-hint">„Planmäßig“ = fest eingeplanter Monatsbetrag (z. B. 700 € Einkäufe, Sparen).</p>
       </section>
 
       <!-- Toolbar -->
@@ -161,6 +181,11 @@
         </select>
         <select id="filterPerson" aria-label="Person filtern">
           <option value="">Alle Personen</option>
+        </select>
+        <select id="filterArt" aria-label="Art filtern">
+          <option value="">Alle Arten</option>
+          <option value="ist">Nur Ausgaben</option>
+          <option value="geplant">Nur planmäßig</option>
         </select>
         <select id="sortSelect" aria-label="Sortierung">
           <option value="name-asc">Name A–Z</option>
@@ -188,6 +213,7 @@
               <thead>
                 <tr>
                   <th>Bezeichnung</th>
+                  <th>Art</th>
                   <th>Kategorie</th>
                   <th>Ausgegeben von</th>
                   <th>Betrag</th>
@@ -241,6 +267,12 @@
       <label>Betrag (€) <input id="editAmount" type="number" step="0.01" min="0" required></label>
       <label>Kategorie <select id="editCategory" required></select></label>
       <label>Person <select id="editPerson" required></select></label>
+      <label>Art
+        <select id="editArt" required>
+          <option value="ist">Ausgabe (Ist)</option>
+          <option value="geplant">Planmäßig</option>
+        </select>
+      </label>
       <label>Notiz <input id="editNote"></label>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="editCancel">Abbrechen</button>
