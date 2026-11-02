@@ -279,6 +279,36 @@ button:focus-visible {
   color: var(--danger);
 }
 
+.banner.warn {
+  background: #fff4e5;
+  color: #9a3412;
+  border: 1px solid rgba(180, 83, 9, 0.25);
+}
+
+.warn-list {
+  margin: 8px 0 0;
+  padding-left: 1.2rem;
+}
+
+.warn-list li {
+  margin: 2px 0;
+}
+
+.warn-inline {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #9a3412;
+}
+
+.row-over-plan {
+  background: rgba(180, 83, 9, 0.08);
+}
+
+.row-over-plan.row-planned {
+  background: rgba(180, 83, 9, 0.12);
+}
+
 .budget-hint {
   margin: -4px 0 4px;
 }

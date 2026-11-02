@@ -132,6 +132,8 @@ function filteredEntries() {
 
 function computeSums(entries) {
   const byCat = {};
+  const byCatIst = {};
+  const byCatGeplant = {};
   let total = 0;
   let a = 0;
   let b = 0;
@@ -145,12 +147,34 @@ function computeSums(entries) {
     else a += e.betrag;
     if (e.art === ART_GEPLANT) {
       geplant += e.betrag;
+      byCatGeplant[e.kategorie] = (byCatGeplant[e.kategorie] || 0) + e.betrag;
       if (e.kategorie === "Sparen") sparenGeplant += e.betrag;
     } else {
       ist += e.betrag;
+      byCatIst[e.kategorie] = (byCatIst[e.kategorie] || 0) + e.betrag;
     }
   });
-  return { byCat, total, a, b, ist, geplant, sparenGeplant };
+  return { byCat, byCatIst, byCatGeplant, total, a, b, ist, geplant, sparenGeplant };
+}
+
+function planOverages(entries) {
+  const { byCatIst, byCatGeplant } = computeSums(entries);
+  const cats = new Set([...Object.keys(byCatIst), ...Object.keys(byCatGeplant)]);
+  const list = [];
+  cats.forEach((name) => {
+    const geplant = byCatGeplant[name] || 0;
+    const istSum = byCatIst[name] || 0;
+    if (geplant > 0 && istSum > geplant) {
+      list.push({
+        kategorie: name,
+        geplant,
+        ist: istSum,
+        diff: istSum - geplant
+      });
+    }
+  });
+  list.sort((a, b) => b.diff - a.diff);
+  return list;
 }
 
 function renderEntries() {
@@ -162,12 +186,18 @@ function renderEntries() {
   $("entriesTable").classList.toggle("hidden", state.entries.length === 0);
 
   const admin = isAdmin();
+  const overCats = new Set(planOverages(state.entries).map((o) => o.kategorie));
   list.forEach((e) => {
     const tr = document.createElement("tr");
     if (e.art === ART_GEPLANT) tr.classList.add("row-planned");
+    if (overCats.has(e.kategorie)) tr.classList.add("row-over-plan");
     const badgeClass = e.art === ART_GEPLANT ? "tag tag-planned" : "tag tag-ist";
+    const overHint =
+      e.art === ART_GEPLANT && overCats.has(e.kategorie)
+        ? `<div class="warn-inline">Ist über Plan</div>`
+        : "";
     tr.innerHTML = `
-      <td>${escapeHtml(e.name)}${e.notiz ? `<div class="muted">${escapeHtml(e.notiz)}</div>` : ""}</td>
+      <td>${escapeHtml(e.name)}${e.notiz ? `<div class="muted">${escapeHtml(e.notiz)}</div>` : ""}${overHint}</td>
       <td><span class="${badgeClass}">${escapeHtml(artLabel(e.art))}</span></td>
       <td>${escapeHtml(e.kategorie)}</td>
       <td>${escapeHtml(personLabel(e.person))}</td>
@@ -211,7 +241,7 @@ function escapeHtml(str) {
 function renderCategories() {
   const body = $("categoriesBody");
   body.innerHTML = "";
-  const { byCat, total } = computeSums(state.entries);
+  const { byCat, byCatIst, byCatGeplant, total } = computeSums(state.entries);
   const names = new Set([
     ...state.categories.map((c) => c.name),
     ...Object.keys(byCat)
@@ -222,6 +252,9 @@ function renderCategories() {
   let budgetSum = 0;
   [...names].sort((a, b) => a.localeCompare(b, "de")).forEach((name) => {
     const sum = byCat[name] || 0;
+    const istSum = byCatIst[name] || 0;
+    const geplantSum = byCatGeplant[name] || 0;
+    const planOver = geplantSum > 0 && istSum > geplantSum;
     const budget = state.budgets[name];
     const hasBudget = budget != null && budget !== "" && !Number.isNaN(Number(budget));
     if (hasBudget) budgetSum += Number(budget);
@@ -229,6 +262,7 @@ function renderCategories() {
     const over = hasBudget && sum > Number(budget);
 
     const tr = document.createElement("tr");
+    if (planOver) tr.classList.add("row-over-plan");
     const budgetCell = document.createElement("td");
     if (admin) {
       const input = document.createElement("input");
@@ -261,12 +295,32 @@ function renderCategories() {
       bar.style.width = `${pct}%`;
       wrap.appendChild(bar);
       progCell.appendChild(wrap);
+    } else if (geplantSum > 0) {
+      const planPct = Math.min(100, (istSum / geplantSum) * 100);
+      const wrap = document.createElement("div");
+      wrap.className = "progress" + (planOver ? " over" : "");
+      wrap.title = `Ist ${planPct.toFixed(0)} % vom Plan`;
+      const bar = document.createElement("span");
+      bar.style.width = `${planPct}%`;
+      wrap.appendChild(bar);
+      progCell.appendChild(wrap);
     } else {
       progCell.textContent = "–";
     }
 
     const nameTd = document.createElement("td");
     nameTd.textContent = name;
+    if (planOver) {
+      const tip = document.createElement("div");
+      tip.className = "warn-inline";
+      tip.textContent = `Ist ${formatEuro(istSum)} > Plan ${formatEuro(geplantSum)}`;
+      nameTd.appendChild(tip);
+    } else if (geplantSum > 0) {
+      const tip = document.createElement("div");
+      tip.className = "muted";
+      tip.textContent = `Ist ${formatEuro(istSum)} / Plan ${formatEuro(geplantSum)}`;
+      nameTd.appendChild(tip);
+    }
     const sumTd = document.createElement("td");
     sumTd.textContent = formatEuro(sum);
     tr.append(nameTd, sumTd, budgetCell, progCell);
@@ -333,12 +387,32 @@ function renderKpisAndCharts() {
     hint.textContent = `${formatEuro(total)} ausgegeben · ${formatEuro(remaining)} übrig von ${formatEuro(available)}.`;
   }
 
+  renderPlanWarnings();
   renderBudgetChart(total, available);
   renderPieChart(byCat);
 
   const prevTotal = state.prevEntries.reduce((s, e) => s + e.betrag, 0);
   const hasPrev = state.prevEntries.length > 0;
   renderBarChart(total, prevTotal, hasPrev);
+}
+
+function renderPlanWarnings() {
+  const banner = $("planWarnBanner");
+  const listEl = $("planWarnList");
+  if (!banner || !listEl) return;
+  const overs = planOverages(state.entries);
+  listEl.innerHTML = "";
+  if (!overs.length) {
+    banner.classList.add("hidden");
+    return;
+  }
+  banner.classList.remove("hidden");
+  overs.forEach((o) => {
+    const li = document.createElement("li");
+    li.textContent =
+      `${o.kategorie}: ${formatEuro(o.ist)} ausgegeben bei ${formatEuro(o.geplant)} geplant (+${formatEuro(o.diff)})`;
+    listEl.appendChild(li);
+  });
 }
 
 function renderAll() {
