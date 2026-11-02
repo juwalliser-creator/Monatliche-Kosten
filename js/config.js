@@ -18,7 +18,8 @@ const DEFAULT_CATEGORIES = [
   "Handy",
   "Einkäufe",
   "Luxusartikel",
-  "Sparen"
+  "Sparen",
+  "Steuern"
 ];
 
 const ART_IST = "ist";
